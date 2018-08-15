@@ -14,10 +14,12 @@ use Mpdf;
 class Pdf {
 
 	protected $config = [];
+	protected $html = '';
 
 	public function __construct($html = '', $config = [])
 	{
 		$this->config = $config;
+		$this->html = $html;
 
 		$mpdf_config = [
 			'mode'                 =>   $this->getConfig('mode'),              // mode - default ''
@@ -45,8 +47,6 @@ class Pdf {
 		$this->mpdf->SetSubject       ( $this->getConfig('subject') );
 		$this->mpdf->SetKeywords      ( $this->getConfig('keywords') );
 		$this->mpdf->SetDisplayMode   ( $this->getConfig('display_mode') );
-
-		$this->mpdf->WriteHTML($html);
 	}
 
 	protected function getConfig($key)
@@ -76,6 +76,23 @@ class Pdf {
 	}
 
 	/**
+	 * Adds a watermark to the PDF
+	 *
+	 * @param string $watermark Text or image source
+	 * @param string $mode Mode: 'text' or 'image'
+	 * @param string $alpha Watermark alpha (0 to 1)
+	 * @return static
+	 *
+	 */
+	public function setWatermark($watermark, $mode = 'text', $alpha = '0.2')
+	{
+		$this->mpdf->{camel_case('show_watermark_'.$mode)} = true;
+		$this->mpdf->{camel_case('watermark_'.$mode.'_alpha')} = $alpha;
+
+		return $this->mpdf->{studly_case('set_watermark_'.$mode)}($watermark);
+	}
+
+	/**
 	 * Encrypts and sets the PDF document permissions
 	 *
 	 * @param array $permisson Permissons e.g.: ['copy', 'print']
@@ -99,6 +116,7 @@ class Pdf {
 	 */
 	public function output()
 	{
+		$this->mpdf->WriteHTML($this->html);
 		return $this->mpdf->Output('', 'S');
 	}
 
@@ -110,6 +128,7 @@ class Pdf {
 	 */
 	public function save($filename)
 	{
+		$this->mpdf->WriteHTML($this->html);
 		return $this->mpdf->Output($filename, 'F');
 	}
 
@@ -121,6 +140,7 @@ class Pdf {
 	 */
 	public function download($filename = 'document.pdf')
 	{
+		$this->mpdf->WriteHTML($this->html);
 		return $this->mpdf->Output($filename, 'D');
 	}
 
@@ -132,6 +152,7 @@ class Pdf {
 	 */
 	public function stream($filename = 'document.pdf')
 	{
+		$this->mpdf->WriteHTML($this->html);
 		return $this->mpdf->Output($filename, 'I');
 	}
 }
